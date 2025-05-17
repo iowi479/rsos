@@ -1,0 +1,11 @@
+[unstable]
+build-std-features = ["compiler-builtins-mem"]
+build-std = ["core", "compiler_builtins"]
+
+# This is our target platform
+[build]
+target = "x86_64-rsos_target.json"
+
+# execute our os using qemu when running `cargo run`
+[target.'cfg(target_os = "none")']
+runner = "bootimage runner"
