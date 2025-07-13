@@ -3,7 +3,6 @@ use lazy_static::lazy_static;
 use spin::Mutex;
 
 mod vga;
-mod volatile;
 
 lazy_static! {
     pub static ref WRITER: Mutex<Writer> = Mutex::new(Writer {
@@ -16,7 +15,14 @@ lazy_static! {
 #[doc(hidden)]
 pub fn _print(args: core::fmt::Arguments) {
     use core::fmt::Write;
-    WRITER.lock().write_fmt(args).unwrap();
+    use x86_64::instructions::interrupts;
+
+    interrupts::without_interrupts(|| {
+        WRITER
+            .lock()
+            .write_fmt(args)
+            .expect("Printing to vga failed");
+    });
 }
 
 #[macro_export]
@@ -48,11 +54,17 @@ mod tests {
 
     #[test_case]
     fn test_println_output() {
+        use core::fmt::Write;
+        use x86_64::instructions::interrupts;
+
         let s = "Some test string that fits on a single line";
-        println!("{}", s);
-        for (i, c) in s.chars().enumerate() {
-            let screen_char = WRITER.lock().read(super::vga::BUFFER_HEIGHT - 2, i);
-            assert_eq!(char::from(screen_char.char), c);
-        }
+        interrupts::without_interrupts(|| {
+            let mut writer = WRITER.lock();
+            writeln!(writer, "{}", s).expect("Failed to write to vga buffer");
+            for (i, c) in s.chars().enumerate() {
+                let screen_char = writer.buffer.chars[super::vga::BUFFER_HEIGHT - 2][i].read();
+                assert_eq!(char::from(screen_char.char), c);
+            }
+        });
     }
 }

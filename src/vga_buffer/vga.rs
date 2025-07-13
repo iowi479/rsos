@@ -1,4 +1,4 @@
-use super::volatile::Volatile;
+use crate::utils::volatile::Volatile;
 
 pub(crate) const BUFFER_HEIGHT: usize = 25;
 pub(crate) const BUFFER_WIDTH: usize = 80;
@@ -44,7 +44,7 @@ pub(crate) struct ScreenChar {
 
 #[repr(transparent)]
 pub(crate) struct Buffer {
-    chars: [[Volatile<ScreenChar>; BUFFER_WIDTH]; BUFFER_HEIGHT],
+    pub(crate) chars: [[Volatile<ScreenChar>; BUFFER_WIDTH]; BUFFER_HEIGHT],
 }
 
 pub struct Writer {

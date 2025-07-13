@@ -13,14 +13,12 @@ pub extern "C" fn _start() -> ! {
 
     rsos::init();
 
-    x86_64::instructions::interrupts::int3();
-
     #[cfg(test)]
     test_main();
 
     println!("It did not crash!");
 
-    loop {}
+    rsos::hlt_loop();
 }
 
 // Panic handlers for test and not test environments
@@ -28,7 +26,7 @@ pub extern "C" fn _start() -> ! {
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
     println!("{}", info);
-    loop {}
+    rsos::hlt_loop();
 }
 
 #[cfg(test)]

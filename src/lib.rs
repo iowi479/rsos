@@ -5,9 +5,11 @@
 #![reexport_test_harness_main = "test_main"]
 #![feature(abi_x86_interrupt)]
 
+pub mod gdt;
 pub mod interrupts;
 pub mod serial;
 pub mod testing;
+pub mod utils;
 pub mod vga_buffer;
 
 /// Entry point for `cargo test`
@@ -16,11 +18,14 @@ pub mod vga_buffer;
 pub extern "C" fn _start() -> ! {
     init();
     test_main();
-    loop {}
+    hlt_loop();
 }
 
 pub fn init() {
+    gdt::init();
     interrupts::init_idt();
+    unsafe { interrupts::PICS.lock().initialize() };
+    x86_64::instructions::interrupts::enable();
 }
 
 #[cfg(test)]
@@ -33,4 +38,10 @@ fn panic(info: &core::panic::PanicInfo) -> ! {
 fn test_breakpoint_exception() {
     // invoke a breakpoint exception and if we continue after this interrupt, we succeed
     x86_64::instructions::interrupts::int3();
+}
+
+pub fn hlt_loop() -> ! {
+    loop {
+        x86_64::instructions::hlt();
+    }
 }
